@@ -74,6 +74,11 @@ mongoose
   .then(() => console.log('connected to mongodb'))
   .catch(err => console.log('theres an error:', err));
 
+
+const productRouter = require('./routes/product.router');
+
+app.use('/v1/product', productRouter);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
@@ -147,12 +152,14 @@ app.post('/register', async (req, res) => {
 
 // function to generate verification token
 
-function generateSecretKey() {
-  const secretKey = crypto.randomBytes(55).toString('hex');
-  return secretKey;
-}
+// function generateSecretKey() {
+//   const secretKey = crypto.randomBytes(55).toString('hex');
+//   return secretKey;
+// }
 
-const secretKey = generateSecretKey(); // verification token
+// const secretKey = generateSecretKey(); // verification token
+
+const secretKey = process.env.JWT_SECRET;
 
 // endpoint to login user
 
