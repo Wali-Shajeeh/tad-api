@@ -170,19 +170,19 @@ app.post('/login', async (req, res) => {
           user.verificationToken = crypto.randomBytes(3).toString('hex');
           await user.save();
           sendVerificationEmail(user.email, user.verificationToken);
-          return res.status(304).json({message: 'Unverified'});
+          return res.status(304).json({success: false, message: 'Unverified'});
         } else {
           const token = jwt.sign({userId: user._id, role:user.role}, secretKey); // sign the secret key with the userId
-          return res.status(200).json({token});
+          return res.status(200).json({ success: true, token});
         }
       } else {
-        return res.status(404).json({message: 'Invalid email or password'});
+        return res.status(404).json({success: false, message: 'Invalid email or password'});
       }
     } else {
-      return res.status(404).json({message: 'Invalid email or password'});
+      return res.status(404).json({success: false, message: 'Invalid email or password'});
     }
   } catch (error) {
-    return res.status(500).json();
+    return res.status(500).json({success: false, message: 'Failed to login'});
   }
 });
 
@@ -649,7 +649,26 @@ app.get('/all-orders', async (req, res) => {
     if (!orders) {
       return res.status(404).json({message: 'No orders for now'});
     }
-    return res.status(200).json(orders);
+
+    const data = orders.map(order => {
+      const orderObj = order.toObject(); // convert Mongoose model to plain object
+
+      orderObj.products = orderObj.products.map(product => {
+        const productObj = product; // convert Mongoose model to plain object
+
+        if (productObj.image) {
+          const cleanedImage = productObj.image;
+          productObj.image = `${process.env.BACKEND_DOMAIN}/${cleanedImage}`;
+        }
+  
+        return productObj;
+      })
+      return orderObj;
+    })
+
+    console.log(data);
+
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({message: 'Internal server error'});
   }
@@ -840,12 +859,12 @@ app.post('/refreshToken', async (req, res) => {
     if (user) {
       user.deviceToken = newToken;
       await user.save();
-      return res.status(200).json();
+      return res.status(200).json({success:true});
     } else {
-      return res.status(404).json();
+      return res.status(404).json({success:false});
     }
   } catch (error) {
-    return res.status(500).json();
+    return res.status(500).json({success:false});
   }
 });
 
